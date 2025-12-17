@@ -472,7 +472,7 @@ type JsonUnionConverter<'T>
                 | ValueSome(i, f) ->
                     fieldsFound <- fieldsFound + 1
                     fields[i] <- readField &reader f
-                | _ -> reader.Skip()
+                | _ -> reader.SafeSkip()
             | _ -> ()
 
         if fieldsFound < case.MinExpectedFieldCount then
@@ -533,7 +533,7 @@ type JsonUnionConverter<'T>
                 case.Ctor [||] :?> 'T
         if usedDocument then
             reader.Read() |> ignore
-            reader.Skip()
+            reader.SafeSkip()
         readExpecting JsonTokenType.EndObject "end of object" &reader ty
         res
 

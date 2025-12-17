@@ -5,6 +5,7 @@ module internal System.Text.Json.Serialization.Helpers
 open System
 open System.Collections.Generic
 open System.Reflection
+open System.Runtime.CompilerServices
 open System.Text.Json
 open System.Text.Json.Serialization
 open FSharp.Reflection
@@ -88,6 +89,28 @@ let isClass ty =
     not (FSharpType.IsUnion(ty, true))
     && not (FSharpType.IsRecord(ty, true))
     && not (FSharpType.IsTuple(ty))
+
+[<AutoOpen>]
+type Utf8JsonReaderHelpers =
+    [<Extension>]
+    static member SafeSkip(reader: byref<Utf8JsonReader>) =
+        if reader.IsFinalBlock then
+            reader.Skip()
+        else
+            let mutable depth = 0
+            reader.Read() |> ignore
+            match reader.TokenType with
+            | JsonTokenType.StartObject
+            | JsonTokenType.StartArray -> depth <- depth + 1
+            | _ -> ()
+
+            while depth > 0 && reader.Read() do
+                match reader.TokenType with
+                | JsonTokenType.StartObject
+                | JsonTokenType.StartArray -> depth <- depth + 1
+                | JsonTokenType.EndObject
+                | JsonTokenType.EndArray -> depth <- depth - 1
+                | _ -> ()
 
 /// If null is a valid JSON representation for ty,
 /// then return ValueSome with the value represented by null,

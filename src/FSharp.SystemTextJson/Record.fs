@@ -207,7 +207,7 @@ type JsonRecordConverter<'T> internal (options: JsonSerializerOptions, fsOptions
                         requiredFieldCount <- requiredFieldCount + 1
                     reader.Read() |> ignore
                     fields[i] <- p.Deserialize(&reader)
-                | _ -> reader.Skip()
+                | _ -> reader.SafeSkip()
             | _ -> ()
 
         if requiredFieldCount < minExpectedFieldCount then
